@@ -173,10 +173,10 @@ go tool cover -html=coverage.out -o coverage.html
 ---
 
 ## 🌍 Hosting
-- **URL pública del sitio (placeholder):**  
-  👉 **[Pega aquí la URL publicada]**
+Url pública del sitio:
+  👉 **https://tweets-challenge.fly.dev/swagger/index.html**
 
-> Podés desplegar en servicios tipo Render, Railway, Fly.io, Koyeb, Cloud Run, etc. Asegurate de mapear `PORT` y abrir el puerto en el PaaS.
+
 
 ---
 
