@@ -1,0 +1,35 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  FLY_APP_NAME: ${{ vars.FLY_APP_NAME || 'tweetschallenge' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Build & Deploy
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          # genera swagger si es parte del runtime; si no, podés comentar estas líneas
+          go run github.com/swaggo/swag/cmd/swag@v1.16.3 init -g cmd/api/main.go -o docs || true
+          # deploy (usa Dockerfile del repo)
+          flyctl deploy --app "$FLY_APP_NAME" --remote-only --now

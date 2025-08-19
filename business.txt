@@ -1,0 +1,87 @@
+Proyecto: tweetschallenge
+Versión: v1.3 (MVP sin colas + follows + rate limit por usuario + env + DB en memoria aislada)
+Fecha: 2025-08-18 (America/Argentina/Buenos_Aires)
+
+1) Objetivo
+- Proveer un microblog mínimo con arquitectura hexagonal, endpoints claros y foco en dominio.
+- Evitar dependencias externas para facilitar el arranque, pruebas y evaluación del challenge.
+
+2) Decisiones de diseño
+- Arquitectura: **Hexagonal (Ports & Adapters)**.
+- Persistencia: **GORM + SQLite in‑memory** con **DSN único por instancia** para que cada servidor (y cada test de integración) tenga su base **aislada** y no comparta estado accidentalmente.
+- Timeline: **fan‑out on read** (se calcula en cada GET) por simplicidad.
+- Rate limit: **ventana fija** in‑memory por `user_id` únicamente en `POST /v1/tweets`.
+- Idempotencia: `POST /v1/follows` y `DELETE /v1/follows` son idempotentes.
+
+3) Por qué DB en memoria
+- **Cero dependencias**: el repo corre sin instalar servicios adicionales.
+- **Tests rápidos y confiables**: DSN único evita contaminación entre casos.
+- **Enfoque en el dominio**: menos ruido de infraestructura.
+- Trade‑offs: datos **efímeros**; no hay HA/replicación. Para producción: adapter a **PostgreSQL** y rate limiter externo (p. ej., Redis) si hay múltiples réplicas.
+
+4) Entidades
+- **Tweet** `{id, user_id, text, created_at}` (280 chars máx).
+- **Follow** `{id, follower_id, followee_id, created_at}`.
+- Reglas: no se permite **self‑follow**; texto 1..280.
+
+5) Endpoints (v1)
+- **Tweets**
+  - `POST /v1/tweets` — crear tweet (**rate‑limited**).
+  - `GET  /v1/timeline/{userID}` — muestra tweets de los **seguidos** (no incluye propios).
+- **Follows**
+  - `POST   /v1/follows` — seguir (idempotente).
+  - `DELETE /v1/follows` — dejar de seguir (idempotente).
+- **Utilidad**
+  - `GET /healthz`
+  - `GET /swagger/*`
+
+6) Rate limiting
+- Alcance: `POST /v1/tweets`.
+- Variables:
+  - `RATE_LIMIT_ENABLED` (default `true`)
+  - `RATE_LIMIT_WINDOW_SEC` (default `60`)
+  - `RATE_LIMIT_MAX_TWEETS` (default `20`)
+- Exceso → `429 Too Many Requests`.
+- Estado en memoria (se reinicia con el proceso). Futuro: backend Redis.
+
+7) Variables de entorno
+- `PORT` — puerto HTTP (la app escucha en `:${PORT}` si está definido).
+- `GIN_MODE` — `debug`/`release`/`test` (valores inválidos se ignoran en hardening para evitar panic).
+- `RATE_LIMIT_ENABLED`, `RATE_LIMIT_WINDOW_SEC`, `RATE_LIMIT_MAX_TWEETS`.
+- `SQLITE_DSN` — opcional; override del DSN en tests o debugging.
+
+8) Errores y validaciones
+- `400` payload inválido, `422` violación de reglas, `429` rate limit, `500` inesperado.
+- `text` 1..280, `user_id` requerido.
+- `follow`: no se permite (follower == followee).
+
+9) Seguridad y observabilidad
+- Sin auth en MVP (todo público).
+- `GET /healthz` para liveness. Logging estándar por Gin.
+
+10) Deploy/Hosting
+- Contenedor con `ENTRYPOINT /app/server` y `EXPOSE 8080` (documental).
+- **Asegurar `PORT` por env** en el PaaS.
+- **URL pública (placeholder)**: _______________________________
+
+11) Swagger
+- Generación con `swag` CLI (`make swagger`), servido en `/swagger/*`.
+
+12) Testing y cobertura
+- Unitarios: dominio, casos de uso, rate limiter, adapters.
+- Integración: router Gin + GORM in‑memory en cada test (aislado).
+- Cobertura:
+  - `go test -coverpkg=./... ./... -covermode=atomic -coverprofile=coverage.out`
+  - `go tool cover -func=coverage.out | tail -n1`
+  - `go tool cover -html=coverage.out -o coverage.html`
+
+13) Roadmap
+- Adapter **PostgreSQL** y migraciones.
+- Rate limiter **Redis** para despliegues con varias réplicas.
+- Autenticación (API Key/JWT), métricas, tracing.
+- Borrado/edición de tweets, búsqueda, paginación por cursor.
+
+14) Diagramas de arquitectura
+- (espacio reservado para imágenes y enlaces)
+  - `docs/images/architecture-diagram-1.png`
+  - `docs/images/architecture-diagram-2.png`

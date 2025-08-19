@@ -1,0 +1,47 @@
+# --- Go binaries & build artifacts ---
+/server
+/bin/
+/dist/
+/build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# --- Test artifacts ---
+coverage.out
+coverage.html
+*.test
+
+# --- OS / IDE ---
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# --- Env files ---
+.env
+.env.*
+!env.example
+
+# --- Go workspace (optional) ---
+go.work
+go.work.sum
+
+# --- Logs / tmp ---
+*.log
+tmp/
+*.pid
+
+# --- Swagger ---
+# NOTA: si servís Swagger en runtime, versioná 'docs/'.
+# Si preferís generarlo en CI, descomentá para ignorarlo:
+# docs/
+
+# --- SQLite files (por si usás modo 'file') ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Vendor (opcional; borra si querés commitear vendor/) ---
+vendor/

@@ -1,0 +1,150 @@
+basePath: /
+definitions:
+  http.CreateTweetReq:
+    properties:
+      text:
+        type: string
+      user_id:
+        type: string
+    required:
+    - text
+    - user_id
+    type: object
+  http.FollowReq:
+    properties:
+      followee_id:
+        type: string
+      follower_id:
+        type: string
+    required:
+    - followee_id
+    - follower_id
+    type: object
+info:
+  contact: {}
+  description: API de ejemplo con arquitectura hexagonal.
+  title: Hexa Microblog API
+  version: "1.0"
+paths:
+  /v1/follows:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.FollowReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Unfollow user
+      tags:
+      - follows
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.FollowReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Follow user
+      tags:
+      - follows
+  /v1/timeline/{userID}:
+    get:
+      parameters:
+      - description: user id
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Timeline
+      tags:
+      - tweets
+  /v1/tweets:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.CreateTweetReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create tweet
+      tags:
+      - tweets
+swagger: "2.0"
